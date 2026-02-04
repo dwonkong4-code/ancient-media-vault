@@ -19,7 +19,16 @@ export function Header() {
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
   
   const { user } = useAuth();
-  const { isInstallable, install } = usePWAInstall();
+  const { isInstallable, install, isInstalled } = usePWAInstall();
+
+  const handleInstallClick = () => {
+    if (isInstallable) {
+      install();
+    } else {
+      // Fallback to apps page for browsers that don't support PWA install
+      navigate("/apps");
+    }
+  };
 
   const openAuth = (mode: "login" | "signup") => {
     setAuthMode(mode);
@@ -77,26 +86,17 @@ export function Header() {
               {/* Theme Switcher */}
               <ThemeSwitcher />
               
-              {/* PWA Install Button - shows when installable */}
-              {isInstallable && (
+              {/* Install App Button - Always visible, triggers PWA install or goes to apps page */}
+              {!isInstalled && (
                 <Button 
                   variant="ghost" 
                   size="sm" 
                   className="p-2"
-                  onClick={install}
-                  title="Install App"
+                  onClick={handleInstallClick}
+                  title={isInstallable ? "Install App" : "Download App"}
                 >
                   <Download className="w-5 h-5 text-primary" />
                 </Button>
-              )}
-              
-              {/* Mobile Download Button - fallback to apps page */}
-              {!isInstallable && (
-                <Link to="/apps" className="lg:hidden">
-                  <Button variant="ghost" size="sm" className="p-2">
-                    <Download className="w-5 h-5 text-primary" />
-                  </Button>
-                </Link>
               )}
 
               {/* Subscribe Button - Always visible */}

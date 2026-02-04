@@ -80,9 +80,8 @@ export function Header() {
 
               {/* Subscribe Button - Always visible */}
               <Button 
-                variant="ghost" 
                 size="sm" 
-                className="text-sm font-medium hidden sm:inline-flex"
+                className="gradient-primary text-primary-foreground text-sm font-medium hidden sm:inline-flex"
                 onClick={() => {
                   if (!user) {
                     openAuth("login");
@@ -99,9 +98,8 @@ export function Header() {
               ) : (
                 <>
                   <Button 
-                    variant="ghost" 
                     size="sm" 
-                    className="text-sm font-medium"
+                    className="gradient-primary text-primary-foreground text-sm font-medium"
                     onClick={() => openAuth("login")}
                   >
                     Login

@@ -35,6 +35,8 @@ import { getFileIdFromUrl, isDirectVideoUrl } from "@/lib/download-service";
 import { useAuth } from "@/contexts/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import { SubscriptionRequired } from "@/components/subscription/SubscriptionRequired";
+import { SubscriptionModal } from "@/components/subscription/SubscriptionModal";
+import { AuthModal } from "@/components/auth/AuthModal";
 import playingIndicator from "@/assets/playing-indicator.webp";
 
 export default function WatchPage() {
@@ -160,14 +162,19 @@ export default function WatchPage() {
     return currentContent?.title || 'video';
   };
 
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+
   const handleDownload = async () => {
-    // Check subscription before download
+    // Check if user is logged in first
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+
+    // Check subscription (admin has free access via hasActiveSubscription)
     if (!hasActiveSubscription) {
-      toast({
-        title: "Subscription Required",
-        description: "Please subscribe to download content.",
-        variant: "destructive",
-      });
+      setShowSubscriptionModal(true);
       return;
     }
 
@@ -681,6 +688,12 @@ export default function WatchPage() {
           )}
         </div>
       </div>
+
+      {/* Auth Modal for non-logged in users */}
+      <AuthModal open={showAuthModal} onOpenChange={setShowAuthModal} defaultMode="login" />
+      
+      {/* Subscription Modal for users without subscription */}
+      <SubscriptionModal open={showSubscriptionModal} onOpenChange={setShowSubscriptionModal} />
     </MainLayout>
   );
 }

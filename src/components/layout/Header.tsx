@@ -78,29 +78,26 @@ export function Header() {
                 </Button>
               </Link>
 
+              {/* Subscribe Button - Always visible */}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-sm font-medium hidden sm:inline-flex"
+                onClick={() => {
+                  if (!user) {
+                    openAuth("login");
+                  } else {
+                    setSubscriptionOpen(true);
+                  }
+                }}
+              >
+                Subscribe
+              </Button>
+
               {user ? (
-                <>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="text-sm font-medium hidden sm:inline-flex"
-                    onClick={() => setSubscriptionOpen(true)}
-                  >
-                    Subscribe
-                  </Button>
-                  <ProfileDropdown />
-                </>
+                <ProfileDropdown />
               ) : (
                 <>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="text-sm font-medium hidden sm:inline-flex"
-                    onClick={() => setSubscriptionOpen(true)}
-                  >
-                    Subscribe
-                  </Button>
-
                   <Button 
                     variant="ghost" 
                     size="sm" 

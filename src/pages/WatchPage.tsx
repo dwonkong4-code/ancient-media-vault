@@ -384,10 +384,10 @@ export default function WatchPage() {
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     title={currentContent.title}
                   />
-                  {/* Transparent logo overlay to block Google Drive popout icon - smaller on mobile */}
+                  {/* Transparent logo overlay to block Google Drive popout icon */}
                   {videoUrl.includes('drive.google.com') && (
                     <div 
-                      className="absolute top-0 right-0 pointer-events-auto w-10 h-10 sm:w-14 sm:h-14 lg:w-16 lg:h-16"
+                      className="absolute top-0 right-0 pointer-events-auto w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24"
                       style={{ zIndex: 2147483647 }}
                     >
                       <img 

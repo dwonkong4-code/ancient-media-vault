@@ -1,20 +1,16 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Home, Film, Tv, Megaphone, User } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Home, Film, Tv, Megaphone, User, Shield } from "lucide-react";
 import { ProfileModal } from "@/components/auth/ProfileModal";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAdmin } from "@/contexts/AdminContext";
 import { AuthModal } from "@/components/auth/AuthModal";
-
-const mobileNavItems = [
-  { title: "Home", href: "/", icon: Home },
-  { title: "Movies", href: "/movies", icon: Film },
-  { title: "TV", href: "/tv-series", icon: Tv },
-  { title: "Guide", href: "/adverts", icon: Megaphone },
-];
 
 export function MobileNav() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
+  const { isAdmin } = useAdmin();
   const [profileOpen, setProfileOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
 
@@ -25,6 +21,18 @@ export function MobileNav() {
       setAuthOpen(true);
     }
   };
+
+  const handleAdminClick = () => {
+    navigate("/admin");
+  };
+
+  // Base nav items
+  const mobileNavItems = [
+    { title: "Home", href: "/", icon: Home },
+    { title: "Movies", href: "/movies", icon: Film },
+    { title: "TV", href: "/tv-series", icon: Tv },
+    { title: "Guide", href: "/adverts", icon: Megaphone },
+  ];
 
   return (
     <>
@@ -37,7 +45,7 @@ export function MobileNav() {
               <Link
                 key={item.href}
                 to={item.href}
-                className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors relative ${
+                className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors relative ${
                   isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -46,10 +54,24 @@ export function MobileNav() {
               </Link>
             );
           })}
+          
+          {/* Admin button - only visible for admin user */}
+          {isAdmin && (
+            <button
+              onClick={handleAdminClick}
+              className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors relative ${
+                location.pathname.startsWith("/admin") ? "text-primary" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Shield className="w-5 h-5" />
+              <span className="text-xs font-medium">Admin</span>
+            </button>
+          )}
+          
           {/* Profile button - opens modal instead of navigating */}
           <button
             onClick={handleProfileClick}
-            className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors relative ${
+            className={`flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors relative ${
               location.pathname === "/profile" ? "text-primary" : "text-muted-foreground hover:text-foreground"
             }`}
           >

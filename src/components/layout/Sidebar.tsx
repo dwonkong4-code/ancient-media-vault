@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
   Film,
@@ -9,9 +9,11 @@ import {
   TrendingUp,
   Clock,
   Star,
+  Shield,
 } from "lucide-react";
 import luoAncientLogo from "@/assets/luo-ancient-logo.png";
 import { SubscriptionModal } from "@/components/subscription/SubscriptionModal";
+import { useAdmin } from "@/contexts/AdminContext";
 
 const navItems = [
   { title: "Home", href: "/", icon: Home },
@@ -26,6 +28,8 @@ const navItems = [
 
 export function Sidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { isAdmin } = useAdmin();
   const [subscriptionOpen, setSubscriptionOpen] = useState(false);
 
   return (
@@ -60,6 +64,19 @@ export function Sidebar() {
                 </Link>
               );
             })}
+            
+            {/* Admin Panel Link - only visible for admin */}
+            {isAdmin && (
+              <button
+                onClick={() => navigate("/admin")}
+                className={`nav-link w-full ${
+                  location.pathname.startsWith("/admin") ? "nav-link-active" : "nav-link-inactive"
+                }`}
+              >
+                <Shield className="w-5 h-5" />
+                <span className="text-sm">Admin Panel</span>
+              </button>
+            )}
           </div>
         </nav>
 

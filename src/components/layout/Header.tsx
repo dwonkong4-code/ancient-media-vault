@@ -8,6 +8,7 @@ import { AuthModal } from "@/components/auth/AuthModal";
 import { ProfileDropdown } from "@/components/auth/ProfileDropdown";
 import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
 import luoAncientLogo from "@/assets/luo-ancient-logo.png";
 
 export function Header() {
@@ -18,6 +19,7 @@ export function Header() {
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
   
   const { user } = useAuth();
+  const { isInstallable, install } = usePWAInstall();
 
   const openAuth = (mode: "login" | "signup") => {
     setAuthMode(mode);
@@ -75,12 +77,27 @@ export function Header() {
               {/* Theme Switcher */}
               <ThemeSwitcher />
               
-              {/* Mobile Download Button */}
-              <Link to="/apps" className="lg:hidden">
-                <Button variant="ghost" size="sm" className="p-2">
-                  <Download className="w-5 h-5 text-green-600" />
+              {/* PWA Install Button - shows when installable */}
+              {isInstallable && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="p-2"
+                  onClick={install}
+                  title="Install App"
+                >
+                  <Download className="w-5 h-5 text-primary" />
                 </Button>
-              </Link>
+              )}
+              
+              {/* Mobile Download Button - fallback to apps page */}
+              {!isInstallable && (
+                <Link to="/apps" className="lg:hidden">
+                  <Button variant="ghost" size="sm" className="p-2">
+                    <Download className="w-5 h-5 text-primary" />
+                  </Button>
+                </Link>
+              )}
 
               {/* Subscribe Button - Always visible */}
               <Button 

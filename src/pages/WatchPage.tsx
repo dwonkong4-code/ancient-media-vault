@@ -275,6 +275,18 @@ export default function WatchPage() {
   };
 
   const handleEpisodeSelect = (episode: Episode, index: number) => {
+    // Check if user is logged in
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+    
+    // Check if user has active subscription
+    if (!hasActiveSubscription) {
+      setShowSubscriptionModal(true);
+      return;
+    }
+    
     setSelectedEpisode(episode);
     setSelectedEpisodeIndex(index);
   };

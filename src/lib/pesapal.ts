@@ -1,11 +1,18 @@
-// Pesapal Payment Integration - Fully Client-Side
+// Pesapal Payment Integration
 // API Documentation: https://developer.pesapal.com/how-to-integrate/e-commerce/api-30-json/api-reference
 
-const PESAPAL_CONSUMER_KEY = "SmkIrFYBHVHjV3UV0LPRQ53GjSjvT+E2";
-const PESAPAL_CONSUMER_SECRET = "z80OF+dxQauvy4smSMJvifIK/uc=";
+// Environment variables (set in .env or Vercel secrets)
+const PESAPAL_CONSUMER_KEY = import.meta.env.VITE_PESAPAL_CONSUMER_KEY || "";
+const PESAPAL_CONSUMER_SECRET = import.meta.env.VITE_PESAPAL_CONSUMER_SECRET || "";
+const PESAPAL_ENV = import.meta.env.VITE_PESAPAL_ENV || "sandbox";
 
-// API URLs - Using live environment
-const PESAPAL_API_URL = "https://pay.pesapal.com/v3";
+// API URLs based on environment
+const PESAPAL_URLS = {
+  sandbox: "https://cybqa.pesapal.com/pesapalv3",
+  production: "https://pay.pesapal.com/v3",
+};
+
+const PESAPAL_API_URL = PESAPAL_ENV === "production" ? PESAPAL_URLS.production : PESAPAL_URLS.sandbox;
 
 export interface PesapalAuthResponse {
   token: string;

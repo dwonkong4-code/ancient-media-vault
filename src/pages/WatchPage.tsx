@@ -38,6 +38,7 @@ import { SubscriptionRequired } from "@/components/subscription/SubscriptionRequ
 import { SubscriptionModal } from "@/components/subscription/SubscriptionModal";
 import { AuthModal } from "@/components/auth/AuthModal";
 import playingIndicator from "@/assets/playing-indicator.webp";
+import luoLogo from "@/assets/luo-ancient-logo.png";
 
 export default function WatchPage() {
   const { id, seriesId } = useParams();
@@ -375,13 +376,34 @@ export default function WatchPage() {
                   </div>
                 </>
               ) : videoUrl ? (
-                <iframe
-                  src={videoUrl}
-                  className="w-full h-full"
-                  allowFullScreen
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  title={currentContent.title}
-                />
+                <>
+                  <iframe
+                    src={videoUrl}
+                    className="w-full h-full"
+                    allowFullScreen
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    title={currentContent.title}
+                  />
+                  {/* Logo overlay to block Google Drive popout icon */}
+                  {videoUrl.includes('drive.google.com') && (
+                    <div 
+                      className="absolute top-0 right-0 pointer-events-auto"
+                      style={{ 
+                        width: '80px', 
+                        height: '80px', 
+                        zIndex: 2147483647 
+                      }}
+                    >
+                      <div className="w-full h-full bg-black flex items-center justify-center p-2">
+                        <img 
+                          src={luoLogo} 
+                          alt="Luo Ancient Movies" 
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </>
               ) : (
                 <>
                   <img

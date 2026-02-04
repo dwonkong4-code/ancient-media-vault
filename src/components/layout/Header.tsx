@@ -6,6 +6,7 @@ import { useState, FormEvent } from "react";
 import { SubscriptionModal } from "@/components/subscription/SubscriptionModal";
 import { AuthModal } from "@/components/auth/AuthModal";
 import { ProfileDropdown } from "@/components/auth/ProfileDropdown";
+import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { useAuth } from "@/contexts/AuthContext";
 import luoAncientLogo from "@/assets/luo-ancient-logo.png";
 
@@ -71,6 +72,9 @@ export function Header() {
           {/* Actions */}
           <div className="flex items-center gap-1 lg:gap-2 flex-shrink-0">
             <div className="flex items-center gap-2">
+              {/* Theme Switcher */}
+              <ThemeSwitcher />
+              
               {/* Mobile Download Button */}
               <Link to="/apps" className="lg:hidden">
                 <Button variant="ghost" size="sm" className="p-2">

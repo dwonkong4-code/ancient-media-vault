@@ -218,7 +218,7 @@ export function AuthModal({ open, onOpenChange, defaultMode = "login" }: AuthMod
               <button
                 type="button"
                 onClick={() => setView("reset")}
-                className="text-xs text-primary hover:underline"
+                className="text-xs text-foreground hover:underline"
               >
                 Forgot password?
               </button>

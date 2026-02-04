@@ -1,1 +1,13 @@
 project_id = "nvcwjbrufamuytiwnzep"
+
+[functions.pesapal-auth]
+verify_jwt = false
+
+[functions.pesapal-register-ipn]
+verify_jwt = false
+
+[functions.pesapal-submit-order]
+verify_jwt = false
+
+[functions.pesapal-transaction-status]
+verify_jwt = false

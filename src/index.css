@@ -34,6 +34,9 @@
     --input: 240 5% 12%;
     --ring: 0 84% 60%;
 
+    /* Highlight (used for subscription modal ring) */
+    --highlight: 48 96% 53%;
+
     --radius: 0.5rem;
 
     /* Sidebar */
@@ -81,6 +84,9 @@
     --input: 240 5% 92%;
     --ring: 0 84% 60%;
 
+    /* Highlight (used for subscription modal ring) */
+    --highlight: 48 96% 53%;
+
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 10% 4%;
     --sidebar-primary: 0 84% 60%;
@@ -120,6 +126,9 @@
     --border: 240 5% 15%;
     --input: 240 5% 12%;
     --ring: 0 84% 60%;
+
+    /* Highlight (used for subscription modal ring) */
+    --highlight: 48 96% 53%;
 
     --sidebar-background: 240 10% 5%;
     --sidebar-foreground: 0 0% 98%;

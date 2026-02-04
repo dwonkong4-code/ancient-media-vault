@@ -1,11 +1,13 @@
 import { MainLayout } from "@/components/layout/MainLayout";
 import { getAdverts, type Advert } from "@/lib/firebase-db";
-import { Megaphone, ExternalLink, Loader2 } from "lucide-react";
+import { Megaphone, Play, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { VideoModal } from "@/components/guide/VideoModal";
 
 export default function AdvertsPage() {
   const [adverts, setAdverts] = useState<Advert[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedVideo, setSelectedVideo] = useState<{ url: string; title: string } | null>(null);
 
   useEffect(() => {
     async function fetchAdverts() {
@@ -21,6 +23,10 @@ export default function AdvertsPage() {
 
     fetchAdverts();
   }, []);
+
+  const handlePlayClick = (advert: Advert) => {
+    setSelectedVideo({ url: advert.linkUrl, title: advert.title });
+  };
 
   return (
     <MainLayout>
@@ -42,14 +48,12 @@ export default function AdvertsPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {adverts.map((advert) => (
-              <a
+              <div
                 key={advert.id}
-                href={advert.linkUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group block rounded-lg overflow-hidden border border-border bg-card hover:border-primary transition-colors"
+                onClick={() => handlePlayClick(advert)}
+                className="group block rounded-lg overflow-hidden border border-border bg-card hover:border-primary transition-colors cursor-pointer"
               >
-                <div className="aspect-video overflow-hidden">
+                <div className="aspect-video overflow-hidden relative">
                   <img
                     src={advert.imageUrl}
                     alt={advert.title}
@@ -58,23 +62,39 @@ export default function AdvertsPage() {
                       e.currentTarget.src = '/placeholder.svg';
                     }}
                   />
+                  {/* Play Button Overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div 
+                      className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg transform scale-90 group-hover:scale-100 transition-transform"
+                      style={{ background: "linear-gradient(135deg, #1cb7ff 1.22%, #2ff58b 50.24%)" }}
+                    >
+                      <Play className="w-7 h-7 text-white fill-white ml-1" />
+                    </div>
+                  </div>
                 </div>
                 <div className="p-4">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="font-semibold group-hover:text-primary transition-colors">
                       {advert.title}
                     </h3>
-                    <ExternalLink className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                   </div>
                   <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                     {advert.description}
                   </p>
                 </div>
-              </a>
+              </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Video Modal */}
+      <VideoModal
+        open={!!selectedVideo}
+        onOpenChange={(open) => !open && setSelectedVideo(null)}
+        videoUrl={selectedVideo?.url || ""}
+        title={selectedVideo?.title || ""}
+      />
     </MainLayout>
   );
 }

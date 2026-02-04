@@ -1,5 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import luoLogo from "@/assets/luo-ancient-logo.png";
+import luoLogoTransparent from "@/assets/luo-ancient-logo-transparent.png";
 
 interface VideoModalProps {
   open: boolean;
@@ -65,23 +65,17 @@ export function VideoModal({ open, onOpenChange, videoUrl, title }: VideoModalPr
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             title={title}
           />
-          {/* Logo overlay to block Google Drive popout icon */}
+          {/* Transparent logo overlay to block Google Drive popout icon - smaller on mobile */}
           {showDriveOverlay && (
             <div 
-              className="absolute top-0 right-0 pointer-events-auto"
-              style={{ 
-                width: '80px', 
-                height: '80px', 
-                zIndex: 2147483647 
-              }}
+              className="absolute top-0 right-0 pointer-events-auto w-10 h-10 sm:w-14 sm:h-14 lg:w-16 lg:h-16"
+              style={{ zIndex: 2147483647 }}
             >
-              <div className="w-full h-full bg-black flex items-center justify-center p-2">
-                <img 
-                  src={luoLogo} 
-                  alt="Luo Ancient Movies" 
-                  className="w-full h-full object-contain"
-                />
-              </div>
+              <img 
+                src={luoLogoTransparent} 
+                alt="Luo Ancient Movies" 
+                className="w-full h-full object-contain"
+              />
             </div>
           )}
         </div>

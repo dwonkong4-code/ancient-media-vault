@@ -205,14 +205,14 @@ export async function updateUserSubscription(
 
 export async function removeUserSubscription(userId: string): Promise<void> {
   const userRef = doc(db, "users", userId);
-  // Use setDoc with merge to set subscription to inactive
-  await setDoc(userRef, {
-    subscription: {
-      isActive: false,
-      deactivatedAt: Timestamp.fromDate(new Date()),
-      deactivatedBy: "admin",
-    }
-  }, { merge: true });
+  // Clear subscription completely so the app doesn't treat an incomplete object as an active plan
+  await setDoc(
+    userRef,
+    {
+      subscription: null,
+    },
+    { merge: true }
+  );
 }
 
 export async function deleteUser(userId: string): Promise<void> {

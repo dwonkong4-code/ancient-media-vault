@@ -9,7 +9,7 @@ import {
   updateProfile,
   User as FirebaseUser
 } from "firebase/auth";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
 import { auth, googleProvider, db } from "@/lib/firebase";
 
 export interface User {
@@ -86,26 +86,88 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Listen to Firebase auth state changes
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        try {
-          const userData = await getUserData(firebaseUser);
-          // Check if plan is expired
-          if (userData.plan?.expiresAt && new Date(userData.plan.expiresAt) < new Date()) {
-            userData.plan = undefined;
-          }
-          setUser(userData);
-        } catch (error) {
-          console.error("Error getting user data:", error);
-          setUser(null);
-        }
-      } else {
-        setUser(null);
+    let unsubscribeUserDoc: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+      // Clean up previous user doc listener when switching users/logging out
+      if (unsubscribeUserDoc) {
+        unsubscribeUserDoc();
+        unsubscribeUserDoc = null;
       }
-      setIsLoading(false);
+
+      if (!firebaseUser) {
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const userDocRef = doc(db, "users", firebaseUser.uid);
+
+        // Ensure the document exists (older accounts / edge cases)
+        const existing = await getDoc(userDocRef);
+        if (!existing.exists()) {
+          const newUser = {
+            id: firebaseUser.uid,
+            email: firebaseUser.email || "",
+            name: firebaseUser.displayName || "User",
+            avatar: firebaseUser.photoURL || undefined,
+            isAdmin: false,
+            createdAt: new Date(),
+          };
+          await setDoc(userDocRef, newUser);
+        }
+
+        // Real-time listener so admin/manual activations immediately reflect in UI + access
+        unsubscribeUserDoc = onSnapshot(
+          userDocRef,
+          (snap) => {
+            const data = snap.data() || {};
+            const subscription = data.subscription;
+
+            let plan: User["plan"] | undefined;
+            if (subscription?.isActive) {
+              const expiresAt: Date | undefined = subscription.expiresAt?.toDate
+                ? subscription.expiresAt.toDate()
+                : subscription.expiresAt
+                  ? new Date(subscription.expiresAt)
+                  : undefined;
+
+              if (expiresAt && expiresAt > new Date() && subscription.plan) {
+                plan = {
+                  name: subscription.plan,
+                  expiresAt,
+                  isActive: true,
+                };
+              }
+            }
+
+            setUser({
+              id: firebaseUser.uid,
+              email: firebaseUser.email || data.email || "",
+              name: data.name || firebaseUser.displayName || "User",
+              avatar: data.avatar || firebaseUser.photoURL || undefined,
+              isAdmin: data.isAdmin || false,
+              plan,
+            });
+            setIsLoading(false);
+          },
+          (error) => {
+            console.error("Error listening to user document:", error);
+            setIsLoading(false);
+          }
+        );
+      } catch (error) {
+        console.error("Error getting user data:", error);
+        setUser(null);
+        setIsLoading(false);
+      }
     });
 
-    return () => unsubscribe();
+    return () => {
+      if (unsubscribeUserDoc) unsubscribeUserDoc();
+      unsubscribeAuth();
+    };
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {

@@ -69,7 +69,7 @@ export function MovieCard({ movie, contentType }: MovieCardProps) {
           {movie.title}
         </h3>
         <p className="text-xs text-muted-foreground mt-0.5">
-          {year} • {genreDisplay}
+          {year} • Trending
         </p>
       </div>
     </Link>

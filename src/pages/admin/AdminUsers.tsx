@@ -6,7 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Trash2, CreditCard, UserX, ChevronLeft } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Search, Trash2, CreditCard, UserX, ChevronLeft, Users, UserCheck, UserMinus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getAllUsers, updateUserSubscription, removeUserSubscription, deleteUser, type UserData } from "@/lib/admin-db";
 import { format, differenceInDays } from "date-fns";
@@ -20,10 +21,13 @@ const PLANS = Object.entries(planDurations).map(([name, days]) => ({
   days,
 }));
 
+type FilterTab = "all" | "active" | "free";
+
 export default function AdminUsers() {
   const [users, setUsers] = useState<UserData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState<FilterTab>("all");
   const [subscriptionDialogOpen, setSubscriptionDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [selectedPlan, setSelectedPlan] = useState("");
@@ -83,14 +87,14 @@ export default function AdminUsers() {
     }
   };
 
-  const handleRemoveSubscription = async (userId: string) => {
-    if (confirm("Are you sure you want to remove this user's subscription?")) {
+  const handleDeactivateSubscription = async (userId: string, userName: string) => {
+    if (confirm(`Are you sure you want to deactivate ${userName}'s subscription? They will lose access immediately.`)) {
       try {
         await removeUserSubscription(userId);
-        toast({ title: "Subscription removed!" });
+        toast({ title: "Subscription deactivated successfully!" });
         loadUsers();
       } catch (error) {
-        toast({ title: "Error removing subscription", variant: "destructive" });
+        toast({ title: "Error deactivating subscription", variant: "destructive" });
       }
     }
   };
@@ -118,11 +122,23 @@ export default function AdminUsers() {
     return days > 0 ? days : 0;
   };
 
-  const filteredUsers = users.filter(
-    (user) =>
+  // Filter users based on active tab and search query
+  const filteredUsers = users.filter((user) => {
+    const matchesSearch = 
       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      user.email.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    if (!matchesSearch) return false;
+    
+    switch (activeTab) {
+      case "active":
+        return isSubscriptionActive(user);
+      case "free":
+        return !user.subscription || !isSubscriptionActive(user);
+      default:
+        return true;
+    }
+  });
 
   const stats = {
     total: users.length,
@@ -144,27 +160,23 @@ export default function AdminUsers() {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-3 gap-4">
-        <Card className="bg-[#0d1e36] border-border/50">
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <div className="text-sm text-muted-foreground">Total Users</div>
-          </CardContent>
-        </Card>
-        <Card className="bg-[#0d1e36] border-border/50 border-green-500/50">
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold text-green-500">{stats.active}</div>
-            <div className="text-sm text-green-500">Active Subscriptions</div>
-          </CardContent>
-        </Card>
-        <Card className="bg-[#0d1e36] border-border/50">
-          <CardContent className="p-4">
-            <div className="text-2xl font-bold">{stats.free}</div>
-            <div className="text-sm text-muted-foreground">Free Users</div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Filter Tabs */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as FilterTab)} className="w-full">
+        <TabsList className="grid w-full max-w-md grid-cols-3 bg-[#0d1e36]">
+          <TabsTrigger value="all" className="flex items-center gap-2 data-[state=active]:bg-primary">
+            <Users className="w-4 h-4" />
+            All ({stats.total})
+          </TabsTrigger>
+          <TabsTrigger value="active" className="flex items-center gap-2 data-[state=active]:bg-green-600">
+            <UserCheck className="w-4 h-4" />
+            Active ({stats.active})
+          </TabsTrigger>
+          <TabsTrigger value="free" className="flex items-center gap-2 data-[state=active]:bg-orange-600">
+            <UserMinus className="w-4 h-4" />
+            Free ({stats.free})
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
 
       <div className="relative max-w-sm">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -243,7 +255,12 @@ export default function AdminUsers() {
                           <CreditCard className="w-4 h-4" />
                         </Button>
                         {isSubscriptionActive(user) && (
-                          <Button variant="ghost" size="icon" onClick={() => handleRemoveSubscription(user.id)} title="Remove subscription">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            onClick={() => handleDeactivateSubscription(user.id, user.name)} 
+                            title="Deactivate subscription"
+                          >
                             <UserX className="w-4 h-4 text-orange-500" />
                           </Button>
                         )}

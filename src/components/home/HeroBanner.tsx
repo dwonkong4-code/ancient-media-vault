@@ -63,7 +63,7 @@ export function HeroBanner() {
 
   return (
     <div className="relative w-full h-[300px] lg:h-[450px] overflow-hidden mb-8 group">
-      {/* Background Image */}
+      {/* Background Image - Clear without fade/blur */}
       <div className="absolute inset-0">
         <img
           src={featured.posterUrl}
@@ -73,8 +73,6 @@ export function HeroBanner() {
             e.currentTarget.src = '/placeholder.svg';
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-background via-background/80 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
       </div>
 
       {/* Navigation Arrows */}
@@ -97,25 +95,22 @@ export function HeroBanner() {
         </>
       )}
 
-      {/* Content */}
-      <div className="absolute inset-0 flex items-center">
-        <div className="px-4 lg:px-6 max-w-2xl">
-          <h2 className="text-3xl lg:text-5xl font-bold mb-3">{featured.title}</h2>
-          <div className="flex items-center gap-3 text-sm text-muted-foreground mb-4">
-            <div className="flex items-center gap-1">
-              <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-              <span className="text-foreground font-medium">{featured.rating}</span>
+      {/* Content - Positioned at bottom with smaller text */}
+      <div className="absolute bottom-12 left-0 right-0">
+        <div className="px-4 lg:px-6">
+          <div className="inline-block bg-background/70 backdrop-blur-sm rounded-lg px-4 py-3 max-w-md">
+            <h2 className="text-lg lg:text-xl font-bold mb-1">{featured.title}</h2>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+              <div className="flex items-center gap-1">
+                <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                <span className="text-foreground font-medium">{featured.rating}</span>
+              </div>
+              <span>{featured.releaseYear}</span>
+              <span>{featured.genre}</span>
             </div>
-            <span>{featured.releaseYear}</span>
-            <span>{featured.genre}</span>
-          </div>
-          <p className="text-muted-foreground mb-6 line-clamp-2 lg:line-clamp-3">
-            {featured.description}
-          </p>
-          <div className="flex items-center gap-3">
             <Link to={watchUrl}>
-              <Button className="gradient-primary text-primary-foreground gap-2 h-11 px-6">
-                <Play className="w-5 h-5 fill-current" />
+              <Button size="sm" className="gradient-primary text-primary-foreground gap-1.5 h-8 px-4 text-xs">
+                <Play className="w-3.5 h-3.5 fill-current" />
                 Watch Now
               </Button>
             </Link>

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -8,12 +9,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/contexts/AuthContext";
-import { User, Crown, LogOut } from "lucide-react";
+import { useAdmin } from "@/contexts/AdminContext";
+import { User, Crown, LogOut, Shield } from "lucide-react";
 import { ProfileModal } from "./ProfileModal";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export function ProfileDropdown() {
   const { user, logout } = useAuth();
+  const { isAdmin } = useAdmin();
+  const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
   const isMobile = useIsMobile();
 
@@ -92,6 +96,12 @@ export function ProfileDropdown() {
             <User className="w-4 h-4 mr-2" />
             My Profile
           </DropdownMenuItem>
+          {isAdmin && (
+            <DropdownMenuItem onClick={() => navigate("/admin")} className="cursor-pointer">
+              <Shield className="w-4 h-4 mr-2" />
+              Admin Panel
+            </DropdownMenuItem>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive focus:text-destructive">
             <LogOut className="w-4 h-4 mr-2" />

@@ -13,38 +13,64 @@ export function useSubscription() {
   const isAdmin = user?.email === ADMIN_EMAIL;
 
   useEffect(() => {
-    async function fetchSubscription() {
+    let cancelled = false;
+
+    async function resolveSubscription() {
       if (!user) {
-        setSubscription(null);
-        setIsLoading(false);
+        if (!cancelled) {
+          setSubscription(null);
+          setIsLoading(false);
+        }
         return;
       }
 
       // Admin gets automatic subscription
       if (isAdmin) {
-        setSubscription({
-          isActive: true,
-          plan: "Admin (Unlimited)",
-          expiresAt: new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000), // 100 years
-        });
-        setIsLoading(false);
+        if (!cancelled) {
+          setSubscription({
+            isActive: true,
+            plan: "Admin (Unlimited)",
+            expiresAt: new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000), // 100 years
+          });
+          setIsLoading(false);
+        }
         return;
       }
 
+      // Prefer the real-time plan from AuthContext (this updates immediately after admin activation)
+      const plan = user.plan;
+      const now = new Date();
+      if (plan?.isActive && plan.expiresAt && new Date(plan.expiresAt) > now) {
+        if (!cancelled) {
+          setSubscription({
+            isActive: true,
+            plan: plan.name,
+            expiresAt: new Date(plan.expiresAt),
+            userId: user.id,
+          });
+          setIsLoading(false);
+        }
+        return;
+      }
+
+      // Fallback: query Firestore (covers edge cases where subscription exists but user doc hasn't updated yet)
       setIsLoading(true);
       try {
         const sub = await checkUserSubscription(user.id);
-        setSubscription(sub);
+        if (!cancelled) setSubscription(sub);
       } catch (error) {
         console.error("Error fetching subscription:", error);
-        setSubscription(null);
+        if (!cancelled) setSubscription(null);
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
     }
 
-    fetchSubscription();
-  }, [user, isAdmin]);
+    resolveSubscription();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id, user?.plan, isAdmin]);
 
   const hasActiveSubscription = isAdmin || (subscription?.isActive ?? false);
 
@@ -57,6 +83,20 @@ export function useSubscription() {
         plan: "Admin (Unlimited)",
         expiresAt: new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000),
       });
+      return;
+    }
+
+    // If AuthContext already has an active plan, reflect it immediately
+    const plan = user.plan;
+    const now = new Date();
+    if (plan?.isActive && plan.expiresAt && new Date(plan.expiresAt) > now) {
+      setSubscription({
+        isActive: true,
+        plan: plan.name,
+        expiresAt: new Date(plan.expiresAt),
+        userId: user.id,
+      });
+      setIsLoading(false);
       return;
     }
 

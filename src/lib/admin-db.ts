@@ -170,7 +170,9 @@ export async function updateUserSubscription(
   days: number
 ): Promise<void> {
   const userRef = doc(db, "users", userId);
+  const now = new Date();
   const expiresAt = new Date();
+  
   if (days === -1) {
     // Lifetime
     expiresAt.setFullYear(expiresAt.getFullYear() + 100);
@@ -178,20 +180,39 @@ export async function updateUserSubscription(
     expiresAt.setDate(expiresAt.getDate() + days);
   }
   
-  await updateDoc(userRef, {
-    subscription: {
-      plan,
-      expiresAt: Timestamp.fromDate(expiresAt),
-      isActive: true,
-    }
+  const subscriptionData = {
+    plan,
+    expiresAt: Timestamp.fromDate(expiresAt),
+    isActive: true,
+    activatedAt: Timestamp.fromDate(now),
+    activatedBy: "admin",
+  };
+  
+  // Use setDoc with merge to handle both existing and new documents
+  await setDoc(userRef, {
+    subscription: subscriptionData
+  }, { merge: true });
+  
+  // Also create in subscriptions collection for consistency
+  const subscriptionDocRef = doc(db, "subscriptions", `${userId}_admin_${now.getTime()}`);
+  await setDoc(subscriptionDocRef, {
+    ...subscriptionData,
+    userId,
+    orderId: `admin_${now.getTime()}`,
+    createdAt: Timestamp.fromDate(now),
   });
 }
 
 export async function removeUserSubscription(userId: string): Promise<void> {
   const userRef = doc(db, "users", userId);
-  await updateDoc(userRef, {
-    subscription: null
-  });
+  // Use setDoc with merge to set subscription to inactive
+  await setDoc(userRef, {
+    subscription: {
+      isActive: false,
+      deactivatedAt: Timestamp.fromDate(new Date()),
+      deactivatedBy: "admin",
+    }
+  }, { merge: true });
 }
 
 export async function deleteUser(userId: string): Promise<void> {

@@ -68,10 +68,14 @@ export function VideoModal({ open, onOpenChange, videoUrl, title }: VideoModalPr
           {/* Logo overlay to block Google Drive popout icon */}
           {showDriveOverlay && (
             <div 
-              className="absolute top-0 right-0 z-10 pointer-events-auto"
-              style={{ width: '60px', height: '60px' }}
+              className="absolute top-0 right-0 pointer-events-auto"
+              style={{ 
+                width: '80px', 
+                height: '80px', 
+                zIndex: 2147483647 
+              }}
             >
-              <div className="w-full h-full bg-black flex items-center justify-center p-1">
+              <div className="w-full h-full bg-black flex items-center justify-center p-2">
                 <img 
                   src={luoLogo} 
                   alt="Luo Ancient Movies" 

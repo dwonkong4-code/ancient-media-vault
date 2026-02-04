@@ -1,38 +1,25 @@
 import { useEffect, useState } from "react";
 import { useNavigate, Link, Outlet, useLocation } from "react-router-dom";
 import { useAdmin } from "@/contexts/AdminContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { getAdminStats } from "@/lib/admin-db";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Film,
   Tv,
   Users,
-  CreditCard,
   LayoutDashboard,
   Image,
   Megaphone,
   Download,
   Settings,
-  LogOut,
+  Home,
   PlayCircle,
-  Menu,
-  X,
+  BarChart3,
+  Settings2,
 } from "lucide-react";
 import luoAncientLogo from "@/assets/luo-ancient-logo.png";
-
-const navItems = [
-  { title: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-  { title: "Movies", href: "/admin/movies", icon: Film },
-  { title: "TV Series", href: "/admin/series", icon: Tv },
-  { title: "Episodes", href: "/admin/episodes", icon: PlayCircle },
-  { title: "Users", href: "/admin/users", icon: Users },
-  { title: "Subscriptions", href: "/admin/subscriptions", icon: CreditCard },
-  { title: "Hero Slides", href: "/admin/hero-slides", icon: Image },
-  { title: "Guide/Adverts", href: "/admin/adverts", icon: Megaphone },
-  { title: "Apps", href: "/admin/apps", icon: Download },
-  { title: "Settings", href: "/admin/settings", icon: Settings },
-];
 
 interface Stats {
   totalMovies: number;
@@ -45,12 +32,24 @@ interface Stats {
   totalApps: number;
 }
 
+const actionCards = [
+  { title: "Upload Movies", description: "Add new movies to the platform", href: "/admin/movies", icon: Film, color: "bg-blue-500" },
+  { title: "Upload Series", description: "Add new TV series", href: "/admin/series", icon: Tv, color: "bg-pink-500" },
+  { title: "Upload Episodes", description: "Add episodes to existing series", href: "/admin/episodes", icon: PlayCircle, color: "bg-green-500" },
+  { title: "Upload Apps", description: "Add mobile and desktop apps", href: "/admin/apps", icon: Download, color: "bg-purple-500" },
+  { title: "Upload Adverts", description: "Manage promotional content", href: "/admin/adverts", icon: Megaphone, color: "bg-red-500" },
+  { title: "Hero Images", description: "Manage homepage hero slider images", href: "/admin/hero-slides", icon: Image, color: "bg-cyan-500" },
+  { title: "Content Management", description: "Edit, delete, and manage all content", href: "/admin/movies", icon: Settings2, color: "bg-teal-500" },
+  { title: "Analytics", description: "View platform statistics", href: "/admin/dashboard", icon: BarChart3, color: "bg-indigo-500" },
+  { title: "Manage Users", description: "User management and permissions", href: "/admin/users", icon: Users, color: "bg-orange-500" },
+];
+
 export default function AdminDashboard() {
   const { isAdminAuthenticated, logoutAdmin } = useAdmin();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [stats, setStats] = useState<Stats | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (!isAdminAuthenticated) {
@@ -73,213 +72,145 @@ export default function AdminDashboard() {
   const isDashboardHome = location.pathname === "/admin/dashboard";
 
   return (
-    <div className="min-h-screen flex bg-background">
-      {/* Mobile sidebar toggle */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="fixed top-4 left-4 z-50 lg:hidden"
-        onClick={() => setSidebarOpen(!sidebarOpen)}
-      >
-        {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-      </Button>
-
-      {/* Sidebar */}
-      <aside
-        className={`fixed lg:static inset-y-0 left-0 z-40 w-64 bg-card border-r border-border transform transition-transform duration-200 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        }`}
-      >
-        <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="flex items-center gap-3 p-4 border-b border-border">
-            <img
-              src={luoAncientLogo}
-              alt="Logo"
-              className="w-10 h-10 rounded-full"
-            />
+    <div className="min-h-screen bg-[#0a1628]">
+      {/* Header */}
+      <header className="sticky top-0 z-50 border-b border-border/50 bg-[#0d1e36]">
+        <div className="flex items-center justify-between px-4 lg:px-8 py-4">
+          <div className="flex items-center gap-3">
+            <img src={luoAncientLogo} alt="Logo" className="w-10 h-10 rounded-full" />
             <div>
-              <h1 className="font-bold text-foreground">Admin Panel</h1>
-              <p className="text-xs text-muted-foreground">Luo Ancient Movies</p>
+              <h1 className="text-xl font-bold text-cyan-400">Admin Dashboard</h1>
+              <p className="text-xs text-muted-foreground">Manage your MovieBox platform</p>
             </div>
           </div>
-
-          {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-            {navItems.map((item) => {
-              const isActive = location.pathname === item.href;
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
-                    isActive
-                      ? "bg-primary text-primary-foreground"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="text-sm font-medium">{item.title}</span>
-                </Link>
-              );
-            })}
-          </nav>
-
-          {/* Logout */}
-          <div className="p-4 border-t border-border">
-            <Button
-              variant="ghost"
-              className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive"
-              onClick={handleLogout}
-            >
-              <LogOut className="w-5 h-5" />
-              <span>Logout</span>
-            </Button>
+          <div className="flex items-center gap-4">
+            <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Back to Home
+            </Link>
+            <Link to="/admin/settings" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+              Settings
+            </Link>
+            {user && (
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white font-medium">
+                  {user.name?.charAt(0).toUpperCase() || "A"}
+                </div>
+                <span className="text-sm font-medium hidden sm:inline">{user.name}</span>
+              </div>
+            )}
           </div>
         </div>
-      </aside>
+      </header>
 
-      {/* Main Content */}
-      <main className="flex-1 p-4 lg:p-8 overflow-auto">
+      <main className="p-4 lg:p-8">
         {isDashboardHome ? (
-          <div className="space-y-8">
-            <div>
-              <h1 className="text-3xl font-bold">Dashboard</h1>
-              <p className="text-muted-foreground">
-                Welcome to the admin panel. Manage all your content here.
-              </p>
-            </div>
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Total Movies</CardTitle>
-                  <Film className="w-4 h-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats?.totalMovies || 0}</div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Total Series</CardTitle>
-                  <Tv className="w-4 h-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats?.totalSeries || 0}</div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Total Episodes</CardTitle>
-                  <PlayCircle className="w-4 h-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats?.totalEpisodes || 0}</div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                  <Users className="w-4 h-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats?.totalUsers || 0}</div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Active Subscriptions</CardTitle>
-                  <CreditCard className="w-4 h-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-green-500">
-                    {stats?.activeSubscriptions || 0}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Hero Slides</CardTitle>
-                  <Image className="w-4 h-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats?.totalHeroImages || 0}</div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Guide/Adverts</CardTitle>
-                  <Megaphone className="w-4 h-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats?.totalAdverts || 0}</div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Apps</CardTitle>
-                  <Download className="w-4 h-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats?.totalApps || 0}</div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Quick Actions */}
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <Link to="/admin/movies">
-                  <Button variant="outline" className="w-full h-20 flex-col gap-2">
-                    <Film className="w-6 h-6" />
-                    <span>Add Movie</span>
-                  </Button>
-                </Link>
-                <Link to="/admin/series">
-                  <Button variant="outline" className="w-full h-20 flex-col gap-2">
-                    <Tv className="w-6 h-6" />
-                    <span>Add Series</span>
-                  </Button>
-                </Link>
-                <Link to="/admin/users">
-                  <Button variant="outline" className="w-full h-20 flex-col gap-2">
-                    <Users className="w-6 h-6" />
-                    <span>Manage Users</span>
-                  </Button>
-                </Link>
-                <Link to="/admin/hero-slides">
-                  <Button variant="outline" className="w-full h-20 flex-col gap-2">
-                    <Image className="w-6 h-6" />
-                    <span>Hero Slides</span>
-                  </Button>
-                </Link>
+          <div className="space-y-8 max-w-7xl mx-auto">
+            {/* Platform Statistics */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-foreground">Platform Statistics</h2>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                  Live
+                </div>
+              </div>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card className="bg-[#0d1e36] border-border/50">
+                  <CardContent className="p-6">
+                    <div className="text-4xl font-bold text-foreground">{stats?.totalMovies || 0}</div>
+                    <div className="text-sm text-muted-foreground mt-1">Total Movies</div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-[#0d1e36] border-border/50">
+                  <CardContent className="p-6">
+                    <div className="text-4xl font-bold text-foreground">{stats?.totalSeries || 0}</div>
+                    <div className="text-sm text-muted-foreground mt-1">Total Series</div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-[#0d1e36] border-border/50">
+                  <CardContent className="p-6">
+                    <div className="text-4xl font-bold text-foreground">{stats?.totalEpisodes || 0}</div>
+                    <div className="text-sm text-muted-foreground mt-1">Total Episodes</div>
+                  </CardContent>
+                </Card>
+                <Card className="bg-[#0d1e36] border-border/50">
+                  <CardContent className="p-6">
+                    <div className="text-4xl font-bold text-foreground">{stats?.activeSubscriptions || 0}</div>
+                    <div className="text-sm text-muted-foreground mt-1">Active Users</div>
+                  </CardContent>
+                </Card>
               </div>
             </div>
+
+            {/* Action Cards Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {actionCards.map((card) => {
+                const Icon = card.icon;
+                return (
+                  <Link key={card.href + card.title} to={card.href}>
+                    <Card className="bg-[#0d1e36] border-border/50 hover:border-primary/50 transition-all cursor-pointer h-full">
+                      <CardContent className="p-6">
+                        <div className={`w-12 h-12 rounded-lg ${card.color} flex items-center justify-center mb-4`}>
+                          <Icon className="w-6 h-6 text-white" />
+                        </div>
+                        <h3 className="font-semibold text-foreground">{card.title}</h3>
+                        <p className="text-sm text-muted-foreground mt-1">{card.description}</p>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* Platform Overview */}
+            <Card className="bg-[#0d1e36] border-border/50">
+              <CardContent className="p-6">
+                <h2 className="text-lg font-semibold text-foreground mb-6">Platform Overview</h2>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Content Library */}
+                  <div>
+                    <h3 className="text-sm text-muted-foreground mb-4">Content Library</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Movies:</span>
+                        <span className="font-medium text-foreground">{stats?.totalMovies || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Series:</span>
+                        <span className="font-medium text-foreground">{stats?.totalSeries || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Episodes:</span>
+                        <span className="font-medium text-foreground">{stats?.totalEpisodes || 0}</span>
+                      </div>
+                    </div>
+                  </div>
+                  {/* User Engagement */}
+                  <div>
+                    <h3 className="text-sm text-muted-foreground mb-4">User Engagement</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Active Subscriptions:</span>
+                        <span className="font-medium text-green-500">{stats?.activeSubscriptions || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Total Users:</span>
+                        <span className="font-medium text-foreground">{stats?.totalUsers || 0}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Hero Slides:</span>
+                        <span className="font-medium text-foreground">{stats?.totalHeroImages || 0}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         ) : (
           <Outlet />
         )}
       </main>
-
-      {/* Overlay for mobile */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
     </div>
   );
 }

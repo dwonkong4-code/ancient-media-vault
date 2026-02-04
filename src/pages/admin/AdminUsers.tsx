@@ -6,18 +6,19 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Search, Trash2, CreditCard, UserX } from "lucide-react";
+import { Search, Trash2, CreditCard, UserX, ChevronLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { getAllUsers, updateUserSubscription, removeUserSubscription, deleteUser, type UserData } from "@/lib/admin-db";
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { Label } from "@/components/ui/label";
+import { Link } from "react-router-dom";
+import { planDurations } from "@/lib/pesapal";
 
-const PLANS = [
-  { name: "Weekly", days: 7 },
-  { name: "Monthly", days: 30 },
-  { name: "Yearly", days: 365 },
-  { name: "Lifetime", days: -1 },
-];
+// Build plans array from planDurations
+const PLANS = Object.entries(planDurations).map(([name, days]) => ({
+  name,
+  days,
+}));
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<UserData[]>([]);
@@ -26,6 +27,7 @@ export default function AdminUsers() {
   const [subscriptionDialogOpen, setSubscriptionDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserData | null>(null);
   const [selectedPlan, setSelectedPlan] = useState("");
+  const [customDays, setCustomDays] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -42,6 +44,7 @@ export default function AdminUsers() {
   const handleManageSubscription = (user: UserData) => {
     setSelectedUser(user);
     setSelectedPlan(user.subscription?.plan || "");
+    setCustomDays("");
     setSubscriptionDialogOpen(true);
   };
 
@@ -54,6 +57,25 @@ export default function AdminUsers() {
     try {
       await updateUserSubscription(selectedUser.id, plan.name, plan.days);
       toast({ title: "Subscription updated successfully!" });
+      setSubscriptionDialogOpen(false);
+      loadUsers();
+    } catch (error) {
+      toast({ title: "Error updating subscription", variant: "destructive" });
+    }
+  };
+
+  const handleCustomDaysSubscription = async () => {
+    if (!selectedUser || !customDays) return;
+    
+    const days = parseInt(customDays);
+    if (isNaN(days) || days <= 0) {
+      toast({ title: "Please enter a valid number of days", variant: "destructive" });
+      return;
+    }
+
+    try {
+      await updateUserSubscription(selectedUser.id, `Custom (${days} days)`, days);
+      toast({ title: `Subscription activated for ${days} days!` });
       setSubscriptionDialogOpen(false);
       loadUsers();
     } catch (error) {
@@ -91,17 +113,57 @@ export default function AdminUsers() {
            new Date(user.subscription.expiresAt) > new Date();
   };
 
+  const getDaysRemaining = (expiresAt: Date) => {
+    const days = differenceInDays(new Date(expiresAt), new Date());
+    return days > 0 ? days : 0;
+  };
+
   const filteredUsers = users.filter(
     (user) =>
       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const stats = {
+    total: users.length,
+    active: users.filter(isSubscriptionActive).length,
+    free: users.filter((u) => !u.subscription || !isSubscriptionActive(u)).length,
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Users</h1>
-        <p className="text-muted-foreground">Manage all registered users</p>
+      <div className="flex items-center gap-4">
+        <Link to="/admin/dashboard">
+          <Button variant="ghost" size="icon">
+            <ChevronLeft className="w-5 h-5" />
+          </Button>
+        </Link>
+        <div>
+          <h1 className="text-2xl font-bold">Users</h1>
+          <p className="text-muted-foreground">Manage all registered users</p>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-3 gap-4">
+        <Card className="bg-[#0d1e36] border-border/50">
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold">{stats.total}</div>
+            <div className="text-sm text-muted-foreground">Total Users</div>
+          </CardContent>
+        </Card>
+        <Card className="bg-[#0d1e36] border-border/50 border-green-500/50">
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold text-green-500">{stats.active}</div>
+            <div className="text-sm text-green-500">Active Subscriptions</div>
+          </CardContent>
+        </Card>
+        <Card className="bg-[#0d1e36] border-border/50">
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold">{stats.free}</div>
+            <div className="text-sm text-muted-foreground">Free Users</div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="relative max-w-sm">
@@ -114,7 +176,7 @@ export default function AdminUsers() {
         />
       </div>
 
-      <Card>
+      <Card className="bg-[#0d1e36] border-border/50">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -123,6 +185,7 @@ export default function AdminUsers() {
                 <TableHead>Email</TableHead>
                 <TableHead>Subscription</TableHead>
                 <TableHead>Expires</TableHead>
+                <TableHead>Days Left</TableHead>
                 <TableHead>Joined</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -130,11 +193,11 @@ export default function AdminUsers() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">Loading...</TableCell>
+                  <TableCell colSpan={7} className="text-center py-8">Loading...</TableCell>
                 </TableRow>
               ) : filteredUsers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">No users found</TableCell>
+                  <TableCell colSpan={7} className="text-center py-8">No users found</TableCell>
                 </TableRow>
               ) : (
                 filteredUsers.map((user) => (
@@ -167,6 +230,11 @@ export default function AdminUsers() {
                       )}
                     </TableCell>
                     <TableCell>
+                      {isSubscriptionActive(user) && user.subscription?.expiresAt
+                        ? `${getDaysRemaining(user.subscription.expiresAt)} days`
+                        : "-"}
+                    </TableCell>
+                    <TableCell>
                       {user.createdAt ? format(new Date(user.createdAt), "MMM dd, yyyy") : "-"}
                     </TableCell>
                     <TableCell className="text-right">
@@ -192,38 +260,83 @@ export default function AdminUsers() {
         </CardContent>
       </Card>
 
-      {/* Subscription Dialog */}
+      {/* Subscription Dialog - Enhanced with all plans */}
       <Dialog open={subscriptionDialogOpen} onOpenChange={setSubscriptionDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Manage Subscription</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <p className="text-sm text-muted-foreground">User: {selectedUser?.name}</p>
-              <p className="text-sm text-muted-foreground">Email: {selectedUser?.email}</p>
+          <div className="space-y-6">
+            <div className="bg-muted/50 p-4 rounded-lg">
+              <p className="font-medium">{selectedUser?.name}</p>
+              <p className="text-sm text-muted-foreground">{selectedUser?.email}</p>
+              {selectedUser?.subscription && isSubscriptionActive(selectedUser) && (
+                <div className="mt-2">
+                  <Badge className="bg-green-500">{selectedUser.subscription.plan}</Badge>
+                  <span className="text-xs text-muted-foreground ml-2">
+                    Expires: {format(new Date(selectedUser.subscription.expiresAt), "MMM dd, yyyy")}
+                  </span>
+                </div>
+              )}
             </div>
+
+            {/* All available plans */}
             <div className="space-y-2">
-              <Label>Select Plan</Label>
+              <Label>Select Subscription Plan</Label>
               <Select value={selectedPlan} onValueChange={setSelectedPlan}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a plan" />
+                  <SelectValue placeholder="Choose a plan" />
                 </SelectTrigger>
                 <SelectContent>
                   {PLANS.map((plan) => (
                     <SelectItem key={plan.name} value={plan.name}>
-                      {plan.name} ({plan.days === -1 ? "Lifetime" : `${plan.days} days`})
+                      {plan.name} {plan.days === -1 ? "(Lifetime)" : `(${plan.days} days)`}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              <Button 
+                onClick={handleUpdateSubscription} 
+                disabled={!selectedPlan}
+                className="w-full mt-2"
+              >
+                Activate Plan
+              </Button>
             </div>
-            <div className="flex justify-end gap-2">
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">Or custom duration</span>
+              </div>
+            </div>
+
+            {/* Custom days option */}
+            <div className="space-y-2">
+              <Label>Custom Days</Label>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  placeholder="Enter number of days"
+                  value={customDays}
+                  onChange={(e) => setCustomDays(e.target.value)}
+                  min="1"
+                />
+                <Button 
+                  onClick={handleCustomDaysSubscription}
+                  disabled={!customDays}
+                  variant="outline"
+                >
+                  Apply
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-4 border-t">
               <Button variant="outline" onClick={() => setSubscriptionDialogOpen(false)}>
                 Cancel
-              </Button>
-              <Button onClick={handleUpdateSubscription} disabled={!selectedPlan}>
-                Update Subscription
               </Button>
             </div>
           </div>

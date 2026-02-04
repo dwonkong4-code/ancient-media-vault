@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import luoLogo from "@/assets/luo-ancient-logo.png";
 
 interface VideoModalProps {
   open: boolean;
@@ -41,8 +42,14 @@ function getEmbedUrl(url: string): string {
   return url;
 }
 
+// Check if URL is a Google Drive URL
+function isGoogleDriveUrl(url: string): boolean {
+  return url.includes('drive.google.com') || url.includes('docs.google.com');
+}
+
 export function VideoModal({ open, onOpenChange, videoUrl, title }: VideoModalProps) {
   const embedUrl = getEmbedUrl(videoUrl);
+  const showDriveOverlay = isGoogleDriveUrl(videoUrl);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -50,7 +57,7 @@ export function VideoModal({ open, onOpenChange, videoUrl, title }: VideoModalPr
         <DialogHeader className="p-4 pb-0">
           <DialogTitle className="text-lg font-semibold pr-8">{title}</DialogTitle>
         </DialogHeader>
-        <div className="aspect-video w-full bg-black">
+        <div className="aspect-video w-full bg-black relative">
           <iframe
             src={embedUrl}
             className="w-full h-full border-0"
@@ -58,6 +65,21 @@ export function VideoModal({ open, onOpenChange, videoUrl, title }: VideoModalPr
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             title={title}
           />
+          {/* Logo overlay to block Google Drive popout icon */}
+          {showDriveOverlay && (
+            <div 
+              className="absolute top-0 right-0 z-10 pointer-events-auto"
+              style={{ width: '60px', height: '60px' }}
+            >
+              <div className="w-full h-full bg-black flex items-center justify-center p-1">
+                <img 
+                  src={luoLogo} 
+                  alt="Luo Ancient Movies" 
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

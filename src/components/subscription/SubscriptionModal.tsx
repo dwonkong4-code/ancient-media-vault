@@ -41,6 +41,29 @@ const features = [
 
 type PaymentStep = "plans" | "phone" | "processing" | "redirect";
 
+function normalizeUgPhoneNumber(raw: string): string | null {
+  const digits = raw.replace(/\D/g, "");
+  if (!digits) return null;
+
+  // Accept already-normalized international format
+  if (digits.startsWith("256") && digits.length === 12) return digits;
+
+  // Local formats: 077..., 07..., or 7...
+  let local = digits;
+  if (local.startsWith("0")) local = local.slice(1);
+
+  // After stripping leading 0, we expect 9 digits for UG mobile numbers
+  if (local.length === 9) return `256${local}`;
+
+  // Fallback: if user pasted something like 2560XXXXXXXXX
+  if (local.startsWith("256") && local.length >= 12) {
+    const trimmed = local.slice(0, 12);
+    return trimmed;
+  }
+
+  return null;
+}
+
 export function SubscriptionModal({ open, onOpenChange }: SubscriptionModalProps) {
   const [step, setStep] = useState<PaymentStep>("plans");
   const [selectedPlan, setSelectedPlan] = useState<typeof plans[0] | null>(null);
@@ -75,10 +98,11 @@ export function SubscriptionModal({ open, onOpenChange }: SubscriptionModalProps
   };
 
   const handlePayment = async () => {
-    if (!phoneNumber || phoneNumber.length < 10) {
+    const formattedPhone = normalizeUgPhoneNumber(phoneNumber);
+    if (!formattedPhone) {
       toast({
         title: "Invalid phone number",
-        description: "Please enter a valid phone number",
+        description: "Enter a valid UG number (e.g. 0771234567 or +256771234567).",
         variant: "destructive",
       });
       return;
@@ -99,12 +123,6 @@ export function SubscriptionModal({ open, onOpenChange }: SubscriptionModalProps
       // Generate order ID
       const orderId = generateOrderId();
       const planDays = planDurations[selectedPlan!.duration] || 30;
-
-      // Format phone number for Pesapal (add Uganda country code if needed)
-      let formattedPhone = phoneNumber.replace(/\s+/g, "").replace(/^0/, "");
-      if (!formattedPhone.startsWith("256")) {
-        formattedPhone = "256" + formattedPhone;
-      }
 
       const callbackUrl = `${window.location.origin}/payment/callback`;
 
@@ -160,7 +178,7 @@ export function SubscriptionModal({ open, onOpenChange }: SubscriptionModalProps
     return (
       <>
         <Dialog open={open} onOpenChange={handleClose}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md ring-2 ring-highlight ring-offset-2 ring-offset-background">
             <DialogHeader>
               <DialogTitle className="text-2xl text-center">Login Required</DialogTitle>
               <DialogDescription className="text-center">
@@ -194,7 +212,7 @@ export function SubscriptionModal({ open, onOpenChange }: SubscriptionModalProps
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto ring-2 ring-highlight ring-offset-2 ring-offset-background">
         {step === "plans" && (
           <>
             <DialogHeader>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Loader2, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,10 +12,39 @@ import {
 } from "@/lib/pesapal";
 import { activateSubscription } from "@/lib/subscription-service";
 
+type CachedCallbackResult = {
+  status: "success";
+  message: string;
+  confirmationCode?: string | null;
+};
+
+function callbackCacheKey(orderTrackingId: string) {
+  return `pesapal_callback_result:${orderTrackingId}`;
+}
+
+function getCachedCallbackResult(orderTrackingId: string): CachedCallbackResult | null {
+  try {
+    const raw = sessionStorage.getItem(callbackCacheKey(orderTrackingId));
+    if (!raw) return null;
+    return JSON.parse(raw) as CachedCallbackResult;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedCallbackResult(orderTrackingId: string, result: CachedCallbackResult) {
+  try {
+    sessionStorage.setItem(callbackCacheKey(orderTrackingId), JSON.stringify(result));
+  } catch {
+    // ignore
+  }
+}
+
 export default function PaymentCallbackPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const processedTrackingIdRef = useRef<string | null>(null);
   
   const [status, setStatus] = useState<"loading" | "verifying" | "success" | "failed" | "pending">("loading");
   const [message, setMessage] = useState("");
@@ -24,22 +53,74 @@ export default function PaymentCallbackPage() {
   // Parse callback params according to Pesapal API spec
   // URL format: ?OrderTrackingId=xxx&OrderMerchantReference=xxx&OrderNotificationType=CALLBACKURL
   const callbackParams = parseCallbackParams(searchParams);
+  const trackingId = callbackParams.orderTrackingId;
 
   useEffect(() => {
     async function processPayment() {
-      // Get pending payment data from localStorage
-      const paymentData = getPendingPaymentData();
-      
-      if (!paymentData) {
+      if (!trackingId) {
         setStatus("failed");
-        setMessage("Payment data not found. Please try again or contact support.");
+        setMessage("Payment was not completed. Please try again.");
         return;
       }
 
+      // If we already confirmed success for this trackingId in this tab/session,
+      // never re-verify (prevents success -> rerender -> failed loops).
+      const cached = getCachedCallbackResult(trackingId);
+      if (cached?.status === "success") {
+        setStatus("success");
+        setConfirmationCode(cached.confirmationCode || null);
+        setMessage(cached.message);
+        return;
+      }
+
+      // Get pending payment data from localStorage
+      const paymentData = getPendingPaymentData();
+
+      // Wait for auth to resolve; don't mark as failed immediately (avoids false negatives).
       if (!user) {
-        setStatus("failed");
+        setStatus("pending");
         setMessage("Please log in to complete your subscription activation.");
         return;
+      }
+
+      // Ensure we only run ONCE per trackingId (even if user object updates after activation)
+      if (processedTrackingIdRef.current === trackingId) return;
+      processedTrackingIdRef.current = trackingId;
+
+      // If we don't have local pending data (e.g., user refreshed), still verify status once
+      // and show a stable success message if completed.
+      if (!paymentData) {
+        setStatus("verifying");
+        setMessage("Verifying your payment with Pesapal...");
+
+        try {
+          const verification = await verifyPaymentStatus(trackingId);
+          if (verification.success && verification.statusCode === 1) {
+            const msg = "Payment confirmed. Your subscription access should be active.";
+            setStatus("success");
+            setConfirmationCode(verification.confirmationCode || null);
+            setMessage(msg);
+            setCachedCallbackResult(trackingId, {
+              status: "success",
+              message: msg,
+              confirmationCode: verification.confirmationCode || null,
+            });
+            return;
+          }
+
+          setStatus("pending");
+          setMessage(
+            `Payment status: ${verification.status}. Please wait a few minutes and check again.`
+          );
+          return;
+        } catch (error) {
+          console.error("Error verifying payment (no local data):", error);
+          setStatus("pending");
+          setMessage(
+            "Could not verify payment status. Please try again in a few minutes or contact support."
+          );
+          return;
+        }
       }
 
       // Verify the merchant reference matches our order
@@ -50,18 +131,12 @@ export default function PaymentCallbackPage() {
         return;
       }
 
-      if (!callbackParams.orderTrackingId) {
-        setStatus("failed");
-        setMessage("Payment was not completed. Please try again.");
-        return;
-      }
-
       // Verify payment status with Pesapal GetTransactionStatus API
       setStatus("verifying");
       setMessage("Verifying your payment with Pesapal...");
 
       try {
-        const verification = await verifyPaymentStatus(callbackParams.orderTrackingId);
+        const verification = await verifyPaymentStatus(trackingId);
 
         // Status codes: 0=INVALID, 1=COMPLETED, 2=FAILED, 3=REVERSED
         if (verification.success && verification.statusCode === 1) {
@@ -70,13 +145,21 @@ export default function PaymentCallbackPage() {
             paymentData.userId,
             paymentData.planName,
             paymentData.orderId,
-            callbackParams.orderTrackingId
+            trackingId
           );
 
           if (success) {
+            const msg = `Your ${paymentData.planName} subscription is now active!`;
             setStatus("success");
             setConfirmationCode(verification.confirmationCode || null);
-            setMessage(`Your ${paymentData.planName} subscription is now active!`);
+            setMessage(msg);
+
+            // Cache success so any subsequent rerender does NOT re-verify and flip to failed
+            setCachedCallbackResult(trackingId, {
+              status: "success",
+              message: msg,
+              confirmationCode: verification.confirmationCode || null,
+            });
             clearPendingPaymentData();
           } else {
             setStatus("failed");
@@ -112,7 +195,7 @@ export default function PaymentCallbackPage() {
     // Small delay to show loading state
     const timer = setTimeout(processPayment, 1000);
     return () => clearTimeout(timer);
-  }, [callbackParams.orderTrackingId, callbackParams.orderMerchantReference, user]);
+  }, [trackingId, callbackParams.orderMerchantReference, user?.id]);
 
   return (
     <MainLayout>

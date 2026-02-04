@@ -119,9 +119,6 @@ export function HeroBanner() {
                 Watch Now
               </Button>
             </Link>
-            <Button variant="outline" className="h-11 px-6">
-              More Info
-            </Button>
           </div>
         </div>
       </div>

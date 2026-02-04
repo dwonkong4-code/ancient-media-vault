@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,9 +6,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Check, Crown, Star, Zap, Smartphone, ArrowLeft, Loader2, ExternalLink, LogIn } from "lucide-react";
+import { Check, Crown, Star, Zap, Loader2, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { generateOrderId, storePaymentData, planDurations, initiatePesapalPayment } from "@/lib/pesapal";
@@ -39,50 +38,18 @@ const features = [
   "Early access to new releases",
 ];
 
-type PaymentStep = "plans" | "phone" | "processing" | "redirect";
-
-function normalizeUgPhoneNumber(raw: string): string | null {
-  const digits = raw.replace(/\D/g, "");
-  if (!digits) return null;
-
-  // Accept already-normalized international format
-  if (digits.startsWith("256") && digits.length === 12) return digits;
-
-  // Local formats: 077..., 07..., or 7...
-  let local = digits;
-  if (local.startsWith("0")) local = local.slice(1);
-
-  // After stripping leading 0, we expect 9 digits for UG mobile numbers
-  if (local.length === 9) return `256${local}`;
-
-  // Fallback: if user pasted something like 2560XXXXXXXXX
-  if (local.startsWith("256") && local.length >= 12) {
-    const trimmed = local.slice(0, 12);
-    return trimmed;
-  }
-
-  return null;
-}
+type PaymentStep = "plans" | "processing" | "redirect";
 
 export function SubscriptionModal({ open, onOpenChange }: SubscriptionModalProps) {
   const [step, setStep] = useState<PaymentStep>("plans");
   const [selectedPlan, setSelectedPlan] = useState<typeof plans[0] | null>(null);
-  const [phoneNumber, setPhoneNumber] = useState("");
   const [authOpen, setAuthOpen] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Close subscription modal and open auth if user is not logged in
-  useEffect(() => {
-    if (open && !user) {
-      // User is not logged in, show auth modal instead
-    }
-  }, [open, user]);
-
   const resetState = () => {
     setStep("plans");
     setSelectedPlan(null);
-    setPhoneNumber("");
   };
 
   const handleClose = (open: boolean) => {
@@ -92,22 +59,9 @@ export function SubscriptionModal({ open, onOpenChange }: SubscriptionModalProps
     onOpenChange(open);
   };
 
-  const handlePlanSelect = (plan: typeof plans[0]) => {
+  const handlePlanSelect = async (plan: typeof plans[0]) => {
     setSelectedPlan(plan);
-    setStep("phone");
-  };
-
-  const handlePayment = async () => {
-    const formattedPhone = normalizeUgPhoneNumber(phoneNumber);
-    if (!formattedPhone) {
-      toast({
-        title: "Invalid phone number",
-        description: "Enter a valid UG number (e.g. 0771234567 or +256771234567).",
-        variant: "destructive",
-      });
-      return;
-    }
-
+    
     if (!user) {
       toast({
         title: "Login required",
@@ -117,50 +71,46 @@ export function SubscriptionModal({ open, onOpenChange }: SubscriptionModalProps
       return;
     }
 
+    // Immediately start payment process
     setStep("processing");
 
     try {
-      // Generate order ID
       const orderId = generateOrderId();
-      const planDays = planDurations[selectedPlan!.duration] || 30;
-
+      const planDays = planDurations[plan.duration] || 30;
       const callbackUrl = `${window.location.origin}/payment/callback`;
 
-      // Use user data for billing info
       const nameParts = user.name?.split(" ") || ["Customer"];
       const firstName = nameParts[0] || "Customer";
       const lastName = nameParts.slice(1).join(" ") || "";
 
-      // Initiate Pesapal payment
+      // Initiate Pesapal payment without phone number (Pesapal will collect it)
       const { redirectUrl, orderTrackingId } = await initiatePesapalPayment({
         orderId,
-        amount: selectedPlan!.price,
-        description: `Luo Ancient - ${selectedPlan!.duration} Subscription`,
+        amount: plan.price,
+        description: `Luo Ancient - ${plan.duration} Subscription`,
         callbackUrl,
         email: user.email,
-        phoneNumber: formattedPhone,
+        phoneNumber: "", // Empty - Pesapal will collect
         firstName,
         lastName,
       });
 
-      // Store payment data for callback processing
       storePaymentData({
         orderId,
         orderTrackingId,
         userId: user.id,
-        planName: selectedPlan!.duration,
+        planName: plan.duration,
         planDays,
-        amount: selectedPlan!.price,
-        phoneNumber: formattedPhone,
+        amount: plan.price,
+        phoneNumber: "",
       });
 
-      // Show redirect step and redirect to Pesapal
       setStep("redirect");
       
-      // Redirect to Pesapal payment page
+      // Redirect immediately
       setTimeout(() => {
         window.location.href = redirectUrl;
-      }, 1000);
+      }, 500);
 
     } catch (error) {
       console.error("Payment error:", error);
@@ -169,9 +119,10 @@ export function SubscriptionModal({ open, onOpenChange }: SubscriptionModalProps
         description: error instanceof Error ? error.message : "Please try again",
         variant: "destructive",
       });
-      setStep("phone");
+      setStep("plans");
     }
   };
+
 
   // If user is not logged in, show login prompt
   if (!user) {
@@ -274,61 +225,6 @@ export function SubscriptionModal({ open, onOpenChange }: SubscriptionModalProps
           </>
         )}
 
-        {step === "phone" && selectedPlan && (
-          <>
-            <DialogHeader>
-              <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" onClick={() => setStep("plans")}>
-                  <ArrowLeft className="w-5 h-5" />
-                </Button>
-                <DialogTitle className="text-xl">
-                  Enter Phone Number
-                </DialogTitle>
-              </div>
-              <DialogDescription className="sr-only">
-                Enter your mobile money phone number to complete payment
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="py-4 space-y-4">
-              {/* Plan Summary */}
-              <div className="bg-accent rounded-lg p-4 text-center">
-                <p className="text-sm text-muted-foreground">You're subscribing to</p>
-                <p className="text-xl font-bold">{selectedPlan.duration} Plan</p>
-                <p className="text-2xl font-bold text-primary">UGX {selectedPlan.priceDisplay}</p>
-              </div>
-
-              {/* Phone Number Only */}
-              <div>
-                <label className="text-sm font-medium">Phone Number (Mobile Money)</label>
-                <Input
-                  type="tel"
-                  placeholder="e.g. 0771234567"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="text-lg mt-1"
-                  autoFocus
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Enter your MTN MoMo or Airtel Money number
-                </p>
-              </div>
-
-              <Button 
-                onClick={handlePayment} 
-                className="w-full gradient-primary"
-                size="lg"
-                disabled={!user}
-              >
-                {user ? `Pay UGX ${selectedPlan.priceDisplay}` : "Login to Continue"}
-              </Button>
-
-              <p className="text-xs text-center text-muted-foreground">
-                You will be redirected to Pesapal to complete payment securely
-              </p>
-            </div>
-          </>
-        )}
 
         {step === "processing" && (
           <div className="py-12 text-center space-y-4">
@@ -344,23 +240,14 @@ export function SubscriptionModal({ open, onOpenChange }: SubscriptionModalProps
           </div>
         )}
 
-        {step === "redirect" && selectedPlan && (
+        {step === "redirect" && (
           <div className="py-12 text-center space-y-4">
             <DialogHeader className="sr-only">
-              <DialogTitle>Redirecting to Pesapal</DialogTitle>
-              <DialogDescription>You will be redirected to complete your payment</DialogDescription>
+              <DialogTitle>Redirecting</DialogTitle>
+              <DialogDescription>Redirecting to payment</DialogDescription>
             </DialogHeader>
-            <div className="w-16 h-16 rounded-full bg-primary/20 mx-auto flex items-center justify-center">
-              <ExternalLink className="w-8 h-8 text-primary animate-pulse" />
-            </div>
-            <h3 className="text-xl font-bold">Redirecting to Pesapal</h3>
-            <p className="text-muted-foreground">
-              You will be redirected to complete your payment of UGX {selectedPlan.priceDisplay}
-            </p>
-            <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-              <Smartphone className="w-4 h-4" />
-              <span>Have your phone ready for the payment prompt</span>
-            </div>
+            <Loader2 className="w-16 h-16 mx-auto animate-spin text-primary" />
+            <h3 className="text-xl font-bold">Redirecting...</h3>
           </div>
         )}
       </DialogContent>

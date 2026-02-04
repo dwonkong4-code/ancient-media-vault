@@ -62,7 +62,7 @@ export function HeroBanner() {
   const watchUrl = featured.type === 'series' ? `/watch/series/${featured.id}` : `/watch/${featured.id}`;
 
   return (
-    <div className="relative w-full h-[300px] lg:h-[450px] overflow-hidden mb-8 group">
+    <div className="relative h-[300px] lg:h-[450px] overflow-hidden mb-8 group mx-4 lg:mx-6 rounded-xl">
       {/* Background Image - Clear without fade/blur */}
       <div className="absolute inset-0">
         <img

@@ -81,7 +81,7 @@ export function Header() {
               {/* Subscribe Button - Always visible */}
               <Button 
                 size="sm" 
-                className="gradient-primary text-primary-foreground text-sm font-medium hidden sm:inline-flex"
+                className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white text-sm font-medium hidden sm:inline-flex"
                 onClick={() => {
                   if (!user) {
                     openAuth("login");
@@ -99,7 +99,7 @@ export function Header() {
                 <>
                   <Button 
                     size="sm" 
-                    className="gradient-primary text-primary-foreground text-sm font-medium"
+                    className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white text-sm font-medium"
                     onClick={() => openAuth("login")}
                   >
                     Login
@@ -107,7 +107,7 @@ export function Header() {
 
                   <Button 
                     size="sm" 
-                    className="gradient-primary text-primary-foreground text-sm font-medium"
+                    className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white text-sm font-medium"
                     onClick={() => openAuth("signup")}
                   >
                     Sign Up

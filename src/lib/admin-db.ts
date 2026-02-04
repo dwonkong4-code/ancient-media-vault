@@ -169,6 +169,8 @@ export async function updateUserSubscription(
   plan: string, 
   days: number
 ): Promise<void> {
+  console.log("[Admin] Activating subscription:", { userId, plan, days });
+  
   const userRef = doc(db, "users", userId);
   const now = new Date();
   const expiresAt = new Date();
@@ -179,6 +181,8 @@ export async function updateUserSubscription(
   } else {
     expiresAt.setDate(expiresAt.getDate() + days);
   }
+  
+  console.log("[Admin] Subscription will expire at:", expiresAt.toISOString());
   
   const subscriptionData = {
     plan,
@@ -193,6 +197,8 @@ export async function updateUserSubscription(
     subscription: subscriptionData
   }, { merge: true });
   
+  console.log("[Admin] Subscription saved to users collection for:", userId);
+  
   // Also create in subscriptions collection for consistency
   const subscriptionDocRef = doc(db, "subscriptions", `${userId}_admin_${now.getTime()}`);
   await setDoc(subscriptionDocRef, {
@@ -201,6 +207,8 @@ export async function updateUserSubscription(
     orderId: `admin_${now.getTime()}`,
     createdAt: Timestamp.fromDate(now),
   });
+  
+  console.log("[Admin] Subscription also saved to subscriptions collection");
 }
 
 export async function removeUserSubscription(userId: string): Promise<void> {

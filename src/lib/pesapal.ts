@@ -96,6 +96,7 @@ export const planDurations: Record<string, number> = {
   "6 Months": 180,
   "1 Year": 365,
   Lifetime: -1, // Special value for lifetime
+  "LuoFree Plan": 30, // Free promotional plan - 30 days access
 };
 
 // Generate unique order ID

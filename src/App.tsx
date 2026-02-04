@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminProvider } from "@/contexts/AdminContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { useDevToolsProtection } from "@/hooks/useDevToolsProtection";
 import Index from "./pages/Index";
 import WatchPage from "./pages/WatchPage";
 import NotFound from "./pages/NotFound";
@@ -39,6 +40,74 @@ import AdminSettings from "./pages/admin/AdminSettings";
 
 const queryClient = new QueryClient();
 
+function AppContent() {
+  useDevToolsProtection();
+  
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/watch/:id" element={<WatchPage />} />
+        <Route path="/watch/series/:seriesId" element={<WatchPage />} />
+        <Route path="/movies" element={<MoviesPage />} />
+        <Route path="/tv-series" element={<TvSeriesPage />} />
+        <Route path="/adverts" element={<AdvertsPage />} />
+        <Route path="/apps" element={<AppsPage />} />
+        <Route path="/trending" element={<TrendingPage />} />
+        <Route path="/recent" element={<RecentPage />} />
+        <Route path="/top-rated" element={<TopRatedPage />} />
+        <Route path="/api/download" element={<DownloadPage />} />
+        <Route path="/search" element={<SearchPage />} />
+        <Route path="/payment/callback" element={<PaymentCallbackPage />} />
+        <Route path="/subscribe" element={<Index />} />
+        <Route path="/login" element={<Index />} />
+        <Route path="/signup" element={<Index />} />
+        <Route path="/profile" element={<Index />} />
+        <Route path="/help" element={<HelpPage />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        
+        {/* Admin Routes */}
+        <Route path="/admin" element={<AdminLogin />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />}>
+          <Route path="" element={null} />
+        </Route>
+        <Route path="/admin/movies" element={<AdminDashboard />}>
+          <Route path="" element={<AdminMovies />} />
+        </Route>
+        <Route path="/admin/series" element={<AdminDashboard />}>
+          <Route path="" element={<AdminSeries />} />
+        </Route>
+        <Route path="/admin/episodes" element={<AdminDashboard />}>
+          <Route path="" element={<AdminEpisodes />} />
+        </Route>
+        <Route path="/admin/users" element={<AdminDashboard />}>
+          <Route path="" element={<AdminUsers />} />
+        </Route>
+        <Route path="/admin/subscriptions" element={<AdminDashboard />}>
+          <Route path="" element={<AdminSubscriptions />} />
+        </Route>
+        <Route path="/admin/hero-slides" element={<AdminDashboard />}>
+          <Route path="" element={<AdminHeroSlides />} />
+        </Route>
+        <Route path="/admin/adverts" element={<AdminDashboard />}>
+          <Route path="" element={<AdminAdverts />} />
+        </Route>
+        <Route path="/admin/apps" element={<AdminDashboard />}>
+          <Route path="" element={<AdminApps />} />
+        </Route>
+        <Route path="/admin/settings" element={<AdminDashboard />}>
+          <Route path="" element={<AdminSettings />} />
+        </Route>
+        
+        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
@@ -47,67 +116,7 @@ const App = () => (
           <TooltipProvider>
             <Toaster />
             <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/watch/:id" element={<WatchPage />} />
-              <Route path="/watch/series/:seriesId" element={<WatchPage />} />
-              <Route path="/movies" element={<MoviesPage />} />
-              <Route path="/tv-series" element={<TvSeriesPage />} />
-              <Route path="/adverts" element={<AdvertsPage />} />
-              <Route path="/apps" element={<AppsPage />} />
-              <Route path="/trending" element={<TrendingPage />} />
-              <Route path="/recent" element={<RecentPage />} />
-              <Route path="/top-rated" element={<TopRatedPage />} />
-              <Route path="/api/download" element={<DownloadPage />} />
-              <Route path="/search" element={<SearchPage />} />
-              <Route path="/payment/callback" element={<PaymentCallbackPage />} />
-              <Route path="/subscribe" element={<Index />} />
-              <Route path="/login" element={<Index />} />
-              <Route path="/signup" element={<Index />} />
-              <Route path="/profile" element={<Index />} />
-              <Route path="/help" element={<HelpPage />} />
-              <Route path="/terms" element={<TermsPage />} />
-              <Route path="/about" element={<AboutPage />} />
-              <Route path="/privacy" element={<PrivacyPage />} />
-              
-              {/* Admin Routes */}
-              <Route path="/admin" element={<AdminLogin />} />
-              <Route path="/admin/dashboard" element={<AdminDashboard />}>
-                <Route path="" element={null} />
-              </Route>
-              <Route path="/admin/movies" element={<AdminDashboard />}>
-                <Route path="" element={<AdminMovies />} />
-              </Route>
-              <Route path="/admin/series" element={<AdminDashboard />}>
-                <Route path="" element={<AdminSeries />} />
-              </Route>
-              <Route path="/admin/episodes" element={<AdminDashboard />}>
-                <Route path="" element={<AdminEpisodes />} />
-              </Route>
-              <Route path="/admin/users" element={<AdminDashboard />}>
-                <Route path="" element={<AdminUsers />} />
-              </Route>
-              <Route path="/admin/subscriptions" element={<AdminDashboard />}>
-                <Route path="" element={<AdminSubscriptions />} />
-              </Route>
-              <Route path="/admin/hero-slides" element={<AdminDashboard />}>
-                <Route path="" element={<AdminHeroSlides />} />
-              </Route>
-              <Route path="/admin/adverts" element={<AdminDashboard />}>
-                <Route path="" element={<AdminAdverts />} />
-              </Route>
-              <Route path="/admin/apps" element={<AdminDashboard />}>
-                <Route path="" element={<AdminApps />} />
-              </Route>
-              <Route path="/admin/settings" element={<AdminDashboard />}>
-                <Route path="" element={<AdminSettings />} />
-              </Route>
-              
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
+          <AppContent />
         </TooltipProvider>
       </AdminProvider>
     </AuthProvider>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,12 +6,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Check, Crown, Star, Zap, Smartphone, ArrowLeft, Loader2, ExternalLink } from "lucide-react";
+import { Check, Crown, Star, Zap, Smartphone, ArrowLeft, Loader2, ExternalLink, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { generateOrderId, storePaymentData, planDurations, initiatePesapalPayment } from "@/lib/pesapal";
+import { AuthModal } from "@/components/auth/AuthModal";
 
 interface SubscriptionModalProps {
   open: boolean;
@@ -44,8 +45,16 @@ export function SubscriptionModal({ open, onOpenChange }: SubscriptionModalProps
   const [step, setStep] = useState<PaymentStep>("plans");
   const [selectedPlan, setSelectedPlan] = useState<typeof plans[0] | null>(null);
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [authOpen, setAuthOpen] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+
+  // Close subscription modal and open auth if user is not logged in
+  useEffect(() => {
+    if (open && !user) {
+      // User is not logged in, show auth modal instead
+    }
+  }, [open, user]);
 
   const resetState = () => {
     setStep("plans");
@@ -145,6 +154,43 @@ export function SubscriptionModal({ open, onOpenChange }: SubscriptionModalProps
       setStep("phone");
     }
   };
+
+  // If user is not logged in, show login prompt
+  if (!user) {
+    return (
+      <>
+        <Dialog open={open} onOpenChange={handleClose}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-2xl text-center">Login Required</DialogTitle>
+              <DialogDescription className="text-center">
+                Please login or create an account to subscribe
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-8 text-center space-y-4">
+              <div className="w-20 h-20 rounded-full bg-primary/20 mx-auto flex items-center justify-center">
+                <LogIn className="w-10 h-10 text-primary" />
+              </div>
+              <p className="text-muted-foreground">
+                You need to be logged in to purchase a subscription plan.
+              </p>
+              <Button 
+                onClick={() => {
+                  onOpenChange(false);
+                  setAuthOpen(true);
+                }}
+                className="w-full gradient-primary"
+                size="lg"
+              >
+                Login / Sign Up
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+        <AuthModal open={authOpen} onOpenChange={setAuthOpen} defaultMode="login" />
+      </>
+    );
+  }
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>

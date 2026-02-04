@@ -19,6 +19,10 @@ import TopRatedPage from "./pages/TopRatedPage";
 import DownloadPage from "./pages/DownloadPage";
 import SearchPage from "./pages/SearchPage";
 import PaymentCallbackPage from "./pages/PaymentCallbackPage";
+import HelpPage from "./pages/HelpPage";
+import TermsPage from "./pages/TermsPage";
+import AboutPage from "./pages/AboutPage";
+import PrivacyPage from "./pages/PrivacyPage";
 
 // Admin Pages
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -62,6 +66,10 @@ const App = () => (
               <Route path="/login" element={<Index />} />
               <Route path="/signup" element={<Index />} />
               <Route path="/profile" element={<Index />} />
+              <Route path="/help" element={<HelpPage />} />
+              <Route path="/terms" element={<TermsPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
               
               {/* Admin Routes */}
               <Route path="/admin" element={<AdminLogin />} />

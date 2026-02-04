@@ -21,6 +21,17 @@ export async function checkUserSubscription(userId: string): Promise<Subscriptio
     
     if (userDoc.exists()) {
       const data = userDoc.data();
+      // If the subscription field is explicitly cleared/deactivated on the user document,
+      // treat that as the source of truth and DO NOT fall back to historical records.
+      if (Object.prototype.hasOwnProperty.call(data, "subscription")) {
+        if (data.subscription === null) {
+          return null;
+        }
+        if (data.subscription && data.subscription.isActive === false) {
+          return null;
+        }
+      }
+
       if (data.subscription) {
         const expiresAt = data.subscription.expiresAt?.toDate?.() || new Date(data.subscription.expiresAt);
         const isExpired = new Date() > expiresAt;

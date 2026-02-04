@@ -1,6 +1,18 @@
 import { database, db } from "./firebase";
 import { ref, push, set, get, update, remove } from "firebase/database";
-import { collection, getDocs, doc, updateDoc, deleteDoc, Timestamp, getDoc, setDoc } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  doc,
+  updateDoc,
+  deleteDoc,
+  Timestamp,
+  getDoc,
+  setDoc,
+  query,
+  where,
+  writeBatch,
+} from "firebase/firestore";
 import type { Movie, Series, Episode, Advert, HeroImage, App } from "./firebase-db";
 
 export interface UserData {
@@ -221,6 +233,31 @@ export async function removeUserSubscription(userId: string): Promise<void> {
     },
     { merge: true }
   );
+
+  // Also deactivate any active subscription records for this user,
+  // otherwise the fallback subscription lookup may still grant access.
+  const subsRef = collection(db, "subscriptions");
+  const snap = await getDocs(query(subsRef, where("userId", "==", userId)));
+
+  const batch = writeBatch(db);
+  let writes = 0;
+  const now = Timestamp.fromDate(new Date());
+
+  snap.forEach((d) => {
+    const data = d.data();
+    if (data?.isActive) {
+      batch.update(d.ref, {
+        isActive: false,
+        deactivatedAt: now,
+        deactivatedBy: "admin",
+      });
+      writes += 1;
+    }
+  });
+
+  if (writes > 0) {
+    await batch.commit();
+  }
 }
 
 export async function deleteUser(userId: string): Promise<void> {

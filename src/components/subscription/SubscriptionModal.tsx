@@ -22,11 +22,11 @@ const plans = [
   { duration: "2 Days", price: 5000, priceDisplay: "5,000", icon: Zap },
   { duration: "1 Week", price: 10000, priceDisplay: "10,000", icon: Zap },
   { duration: "2 Weeks", price: 17000, priceDisplay: "17,000", icon: Star },
-  { duration: "1 Month", price: 30000, priceDisplay: "30,000", icon: Star },
+  { duration: "1 Month", price: 30000, priceDisplay: "30,000", icon: Star, popular: true },
   { duration: "3 Months", price: 70000, priceDisplay: "70,000", icon: Crown },
   { duration: "6 Months", price: 120000, priceDisplay: "120,000", icon: Crown },
   { duration: "1 Year", price: 200000, priceDisplay: "200,000", icon: Crown },
-  { duration: "Lifetime", price: 1000000, priceDisplay: "1,000,000", icon: Crown },
+  { duration: "Lifetime", price: 1000000, priceDisplay: "1,000,000", icon: Crown, best: true },
 ];
 
 const features = [

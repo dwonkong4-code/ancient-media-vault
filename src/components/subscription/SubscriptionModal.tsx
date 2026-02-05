@@ -22,11 +22,11 @@ const plans = [
   { duration: "2 Days", price: 5000, priceDisplay: "5,000", icon: Zap },
   { duration: "1 Week", price: 10000, priceDisplay: "10,000", icon: Zap },
   { duration: "2 Weeks", price: 17000, priceDisplay: "17,000", icon: Star },
-  { duration: "1 Month", price: 30000, priceDisplay: "30,000", icon: Star, popular: true },
+  { duration: "1 Month", price: 30000, priceDisplay: "30,000", icon: Star },
   { duration: "3 Months", price: 70000, priceDisplay: "70,000", icon: Crown },
   { duration: "6 Months", price: 120000, priceDisplay: "120,000", icon: Crown },
   { duration: "1 Year", price: 200000, priceDisplay: "200,000", icon: Crown },
-  { duration: "Lifetime", price: 1000000, priceDisplay: "1,000,000", icon: Crown, best: true },
+  { duration: "Lifetime", price: 1000000, priceDisplay: "1,000,000", icon: Crown },
 ];
 
 const features = [
@@ -193,25 +193,9 @@ export function SubscriptionModal({ open, onOpenChange }: SubscriptionModalProps
                   <button
                     key={plan.duration}
                     onClick={() => handlePlanSelect(plan)}
-                    className={`relative flex flex-col items-center p-4 rounded-xl border transition-all hover:scale-105 ${
-                      plan.popular
-                        ? "border-primary bg-primary/10 ring-2 ring-primary"
-                        : plan.best
-                        ? "border-yellow-500 bg-yellow-500/10"
-                        : "border-border hover:border-primary/50"
-                    }`}
-                  >
-                    {plan.popular && (
-                      <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full">
-                        POPULAR
-                      </span>
-                    )}
-                    {plan.best && (
-                      <span className="absolute -top-2 left-1/2 -translate-x-1/2 bg-yellow-500 text-black text-[10px] font-bold px-2 py-0.5 rounded-full">
-                        BEST VALUE
-                      </span>
-                    )}
-                    <Icon className={`w-6 h-6 mb-2 ${plan.best ? "text-yellow-500" : "text-primary"}`} />
+                    className={"relative flex flex-col items-center p-4 rounded-xl border border-border transition-all hover:scale-105 hover:border-primary/50"}
+                    >
+                      <Icon className={`w-6 h-6 mb-2 text-primary`} />
                     <span className="text-xs text-muted-foreground">{plan.duration}</span>
                     <span className="text-lg font-bold mt-1">UGX {plan.priceDisplay}</span>
                   </button>

@@ -99,6 +99,12 @@ export function MovieCard({ movie, contentType }: MovieCardProps) {
               S{seasons}
             </div>
           )}
+          {/* LUO badge on the top-left of the poster */}
+          <div className="absolute top-2 left-2">
+            <div className="text-xs font-semibold px-2 py-0.5 rounded shadow-md" style={{ background: 'linear-gradient(90deg,#ffd54a,#ff7043)', color: '#0b0b0b' }}>
+              LUO
+            </div>
+          </div>
         </div>
         <div className="mt-2">
           <h3 className="text-sm font-medium truncate group-hover:text-primary transition-colors">
